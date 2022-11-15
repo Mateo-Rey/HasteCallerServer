@@ -12,6 +12,7 @@ const ContextProvider = ({ children }) => {
   const [call, setCall] = useState({});
   const [callAccepted, setCallAccepted] = useState(false);
   const [callEnded, setCallEnded] = useState(false);
+  const [name, setName] = useState("");
 
   const myVideo = useRef();
   const userVideo = useRef();
@@ -40,26 +41,67 @@ const ContextProvider = ({ children }) => {
       socket.emit("answercall", { signal: data, to: call.from });
     });
 
-    peer.on('stream', (currentStream) => {
-        userVideo.current.srcObject = currentStream;
-    })
+    peer.on("stream", (currentStream) => {
+      userVideo.current.srcObject = currentStream;
+    });
 
     peer.signal(call.signal);
 
-    connectionRef.current = peer
+    connectionRef.current = peer;
   };
 
   const callUser = (id) => {
     const peer = new Peer({ initiator: true, trickle: false, stream });
 
     peer.on("signal", (data) => {
-        socket.emit("calluser", { userToCall: id, signalData: data, from: me, name});
+      socket.emit("calluser", {
+        userToCall: id,
+        signalData: data,
+        from: me,
+        name,
       });
+    });
 
-    peer.on('stream', (currentStream) => {
-          userVideo.current.srcObject = currentStream;
-      })
+    peer.on("stream", (currentStream) => {
+      userVideo.current.srcObject = currentStream;
+    });
+
+    socket.on("callaccepted", (signal) => {
+        setCallAccepted(true);
+
+        peer.signal(signal);
+    })
+    
+    connectionRef.current = peer;
   };
 
-  const leaveCall = () => {};
+  const leaveCall = () => {
+    setCallEnded(true);
+
+    connectionRef.current.destroy();
+
+    window.location.reload
+  };
+
+  return (
+    <SocketContext.Provider
+      value={{
+        stream,
+        leaveCall,
+        myVideo,
+        userVideo,
+        me,
+        call,
+        callAccepted,
+        callEnded,
+        name,
+        answerCall,
+        callUser,
+        setName,
+      }}>
+        {children}
+      </SocketContext.Provider>
+  )
 };
+
+export { ContextProvider, SocketContext };
