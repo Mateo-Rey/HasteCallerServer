@@ -48,7 +48,7 @@ const Options = ({ children }) => {
     useContext(SocketContext);
   const [idToCall, setIdToCall] = useState("");
   const classes = useStyles();
-
+  console.log(me);
   return (
     <Container className={classes.container}>
       <Paper elevation={10} className={classes.paper}>
